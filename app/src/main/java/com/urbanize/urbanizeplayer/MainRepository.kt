@@ -1,5 +1,6 @@
 package com.urbanize.urbanizeplayer
 
+import android.os.Environment
 import android.util.JsonReader
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -9,13 +10,21 @@ import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
+import java.io.FileOutputStream
 import java.io.InputStream
 import java.io.StringReader
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 import kotlin.concurrent.fixedRateTimer
+import android.webkit.MimeTypeMap
+import android.content.ContentResolver
 
-class MainRepository {
+
+
+
+
+class MainRepository(private val filesDir: File) {
     val TAG = "MainRepository"
 
     private val contentApiService: ContentApiService = ContentApi.retrofitService
@@ -109,6 +118,21 @@ class MainRepository {
         }
     }
 
+    fun getFileType(path: String): String {
+        val url = URL(path)
+        val connection = url.openConnection() as HttpsURLConnection
+        val mime = connection.getHeaderField("Content-Type")
+        return mime
+    }
+
+    fun download(link: String, path: String) {
+        URL(link).openStream().use { input ->
+            FileOutputStream(File(path)).use { output ->
+                input.copyTo(output)
+            }
+        }
+    }
+
     fun getAuthToken(): LiveData<AuthProperty> {
         val authToken = MutableLiveData<AuthProperty>()
 
@@ -130,6 +154,18 @@ class MainRepository {
         return authToken
     }
 
+
+    fun downloadCampaignsContent(campaigns: Map<String, ContentProperty>) {
+        val mime = MimeTypeMap.getSingleton()
+        campaigns.forEach {
+            val link = it.value.content.img
+            val ext = mime.getExtensionFromMimeType(getFileType(link))
+            val savePath = "${filesDir.path}/${it.key}.${ext}"
+            download(link, savePath)
+            Log.d(TAG, "Downloaded content to ${savePath}")
+        }
+    }
+
     fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<Map<String, ContentProperty>> {
         val campaigns = MutableLiveData<Map<String, ContentProperty>>()
 
@@ -141,7 +177,12 @@ class MainRepository {
                         response: Response<Map<String, ContentProperty>>
                     ) {
                         campaigns.value = response.body()
-                        Log.d("testCampaigns", campaigns.value.toString())
+                        Log.d(TAG, campaigns.value.toString())
+
+                        // download the campaigns content to disk
+                        GlobalScope.launch {
+                            downloadCampaignsContent(campaigns.value ?: emptyMap())
+                        }
                     }
 
                     // Error case is left out for brevity.

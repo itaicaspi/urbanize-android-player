@@ -1,13 +1,20 @@
 package com.urbanize.urbanizeplayer
 
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URL
 
 
 class MainActivity : AppCompatActivity() {
@@ -31,6 +38,8 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, newCampaigns?.toString()?:"")
 //            Toast.makeText(this, newCampaigns.toString(), Toast.LENGTH_LONG).show()
         })
+
+        Log.d(TAG, "files dir ${this.filesDir.path}")
 
 //        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 //        if (permission != PackageManager.PERMISSION_GRANTED) {
