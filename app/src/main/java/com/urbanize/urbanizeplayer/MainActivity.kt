@@ -23,13 +23,23 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
 import com.google.firebase.ml.vision.common.FirebaseVisionImageMetadata
 import com.google.firebase.ml.vision.face.*
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
@@ -38,6 +48,9 @@ import java.util.concurrent.TimeUnit
 class MainActivity : AppCompatActivity() {
     private var lensFacing = CameraX.LensFacing.FRONT
     private val TAG = "MainActivity"
+    private lateinit var auth: FirebaseAuth
+
+    private lateinit var viewModel: MainViewModel
 
     private class LuminosityAnalyzer : ImageAnalysis.Analyzer {
         private var lastAnalyzedTimestamp = 0L
@@ -160,29 +173,59 @@ class MainActivity : AppCompatActivity() {
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
         // hide the status bar and action bar
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
         actionBar?.hide()
 
-
-        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 1240)
-            return
-        }
-
         // camera handling
 //        textureView.post { startCamera() }
 
-        val cameraAvailable = checkCameraHardware(this)
-        if (!cameraAvailable) {
-            findViewById<TextureView>(R.id.textureView).visibility = View.GONE
+        viewModel.campaigns.observe(this, Observer {newCampaigns ->
+            Log.d(TAG, newCampaigns.toString())
+        })
+
+        GlobalScope.launch {
+            viewModel.fetchCampaigns()
         }
 
+        startWebPlayer()
+
+        // Initialize Firebase Auth
+        auth = FirebaseAuth.getInstance()
+        findViewById<TextureView>(R.id.textureView).visibility = View.GONE
+
+        // Write a message to the database
+//        val database = FirebaseDatabase.getInstance()
+//        val myRef = database.getReference("version_information")
+//        // Read from the database
+//        myRef.addValueEventListener(object : ValueEventListener {
+//            override fun onDataChange(dataSnapshot: DataSnapshot) {
+//                // This method is called once with the initial value and again
+//                // whenever data at this location is updated.
+//                val value = dataSnapshot.value
+//                Log.d(TAG, "Value is: $value")
+//            }
+//
+//            override fun onCancelled(error: DatabaseError) {
+//                // Failed to read value
+//                Log.w(TAG, "Failed to read value.", error.toException())
+//            }
+//        })
+    }
+
+    public override fun onStart() {
+        super.onStart()
+        // Check if user is signed in (non-null) and update UI accordingly.
+        val currentUser = auth.currentUser
+//        updateUI(currentUser)
+    }
+
+    private fun startWebPlayer() {
         // get the webview and load the video html5 template
         val mainWebView: WebView = findViewById(R.id.webview)
         mainWebView.webChromeClient = WebChromeClient()
@@ -195,8 +238,20 @@ class MainActivity : AppCompatActivity() {
 //        mainWebView.loadUrl("file:///android_asset/video.html")
     }
 
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun startCamera() {
+        // request permissions
+        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 1240)
+            return
+        }
+
+        // make sure the camera is available
+        val cameraAvailable = checkCameraHardware(this)
+        if (!cameraAvailable) {
+            findViewById<TextureView>(R.id.textureView).visibility = View.GONE
+        }
+
         val metrics = DisplayMetrics().also { textureView.display.getRealMetrics(it) }
         val screenSize = Size(metrics.widthPixels, metrics.heightPixels)
         val screenAspectRatio = Rational(metrics.widthPixels, metrics.heightPixels)
