@@ -13,11 +13,13 @@ import java.io.InputStream
 import java.io.StringReader
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
+import kotlin.concurrent.fixedRateTimer
 
 class MainRepository {
     val TAG = "MainRepository"
 
     private val contentApiService: ContentApiService = ContentApi.retrofitService
+    private val authApiService: AuthApiService = AuthApi.retrofitService
 
     private fun getJsonValue(json: String, requestedKey: String) : String {
         val jsonReader = JsonReader(StringReader(json))
@@ -107,29 +109,47 @@ class MainRepository {
         }
     }
 
-    fun getCampaigns(): LiveData<String> {
-        val authToken = MutableLiveData<String>()
-        val campaigns = MutableLiveData<String>()
+    fun getAuthToken(): LiveData<AuthProperty> {
+        val authToken = MutableLiveData<AuthProperty>()
 
-        GlobalScope.launch {
-            authToken.postValue(getAuthToken("itai@urbanize.co", "!2218Lati"))
-            campaigns.postValue(queryDatabase("/campaigns/-L_nVNhCiSpTZPO482EC", authToken.value?:""))
-            Log.d("authToken", authToken.value?:"")
+        val apiKey = "AIzaSyC341Xx6m5yGZMZJ93xaWmf7JOcVF1e4tc"
+        val email = "itai@urbanize.co"
+        val password = "!2218Lati"
+        authApiService.getAuthToken(apiKey, email, password).enqueue(object : Callback<AuthProperty> {
+            override fun onFailure(call: Call<AuthProperty>, t: Throwable) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
 
-            val testCampaigns = MutableLiveData<Map<String, ContentProperty>>()
-            contentApiService.getCampaigns(authToken.value?:"").enqueue(object : Callback<Map<String, ContentProperty>> {
-                override fun onResponse(call: Call<Map<String, ContentProperty>>, response: Response<Map<String, ContentProperty>>) {
-                    testCampaigns.value = response.body()
-                    Log.d("testCampaigns", testCampaigns.value.toString())
-                }
-                // Error case is left out for brevity.
-                override fun onFailure(call: Call<Map<String, ContentProperty>>, t: Throwable) {
-                    TODO()
-                }
-            })
+            override fun onResponse(call: Call<AuthProperty>, response: Response<AuthProperty>) {
+                authToken.value = response.body()
+                Log.d("testAuth", authToken.value.toString())
+            }
+
+        })
+
+        return authToken
+    }
+
+    fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<Map<String, ContentProperty>> {
+        val campaigns = MutableLiveData<Map<String, ContentProperty>>()
+
+        fixedRateTimer("timer", false, 10*1000, periodInSec*1000) {
+            contentApiService.getCampaigns(authToken.value?.idToken ?: "")
+                .enqueue(object : Callback<Map<String, ContentProperty>> {
+                    override fun onResponse(
+                        call: Call<Map<String, ContentProperty>>,
+                        response: Response<Map<String, ContentProperty>>
+                    ) {
+                        campaigns.value = response.body()
+                        Log.d("testCampaigns", campaigns.value.toString())
+                    }
+
+                    // Error case is left out for brevity.
+                    override fun onFailure(call: Call<Map<String, ContentProperty>>, t: Throwable) {
+                        TODO()
+                    }
+                })
         }
-
-
 
         return campaigns
     }
