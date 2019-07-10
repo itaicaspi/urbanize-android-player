@@ -6,6 +6,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.io.InputStream
 import java.io.StringReader
 import java.net.URL
@@ -13,6 +16,8 @@ import javax.net.ssl.HttpsURLConnection
 
 class MainRepository {
     val TAG = "MainRepository"
+
+    private val contentApiService: ContentApiService = ContentApi.retrofitService
 
     private fun getJsonValue(json: String, requestedKey: String) : String {
         val jsonReader = JsonReader(StringReader(json))
@@ -103,11 +108,29 @@ class MainRepository {
     }
 
     fun getCampaigns(): LiveData<String> {
+        val authToken = MutableLiveData<String>()
         val campaigns = MutableLiveData<String>()
+
         GlobalScope.launch {
-            val authToken = getAuthToken("itai@urbanize.co", "!2218Lati")
-            campaigns.postValue(queryDatabase("/campaigns/-L_nVNhCiSpTZPO482EC", authToken))
+            authToken.postValue(getAuthToken("itai@urbanize.co", "!2218Lati"))
+            campaigns.postValue(queryDatabase("/campaigns/-L_nVNhCiSpTZPO482EC", authToken.value?:""))
+            Log.d("authToken", authToken.value?:"")
+
+            val testCampaigns = MutableLiveData<Map<String, ContentProperty>>()
+            contentApiService.getCampaigns(authToken.value?:"").enqueue(object : Callback<Map<String, ContentProperty>> {
+                override fun onResponse(call: Call<Map<String, ContentProperty>>, response: Response<Map<String, ContentProperty>>) {
+                    testCampaigns.value = response.body()
+                    Log.d("testCampaigns", testCampaigns.value.toString())
+                }
+                // Error case is left out for brevity.
+                override fun onFailure(call: Call<Map<String, ContentProperty>>, t: Throwable) {
+                    TODO()
+                }
+            })
         }
+
+
+
         return campaigns
     }
 

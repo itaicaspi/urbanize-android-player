@@ -1,20 +1,13 @@
 package com.urbanize.urbanizeplayer
 
+import com.google.firebase.database.IgnoreExtraProperties
+
+@IgnoreExtraProperties
 data class ContentProperty (
-    val id: String,
-    @Transient val audience: String = "",
-    val content: Content,
-    @Transient val general: String = ""
+//    val id: String,
+    val content: Content
 )
 
 data class Content (
     val img: String
-)
-
-data class General (
-    val budget: Int,
-    val campaignName: String,
-    val startDate: Int,
-    val endDate: Int,
-    val view: Int
 )
