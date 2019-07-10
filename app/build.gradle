@@ -56,6 +56,9 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version_kotlin_coroutines"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$version_kotlin_coroutines"
 
+    // Dagger 2
+    implementation 'com.google.dagger:dagger:2.23.2'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.23.2'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'
