@@ -10,6 +10,7 @@ import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import com.urbanize.urbanizeplayer.database.PlayerDatabase
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.File
@@ -30,7 +31,10 @@ class MainActivity : AppCompatActivity() {
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
         actionBar?.hide()
 
-        viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
+        // create the view model
+        val dataSource = PlayerDatabase.getInstance(application).playerDatabaseDao
+        val viewModelFactory = MainViewModelFactory(dataSource, application)
+        viewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel::class.java)
 
         // update the UI with the fetched campaigns
         viewModel.campaigns.observe(this, Observer {newCampaigns ->

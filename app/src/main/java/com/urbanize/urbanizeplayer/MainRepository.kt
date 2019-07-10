@@ -1,9 +1,11 @@
 package com.urbanize.urbanizeplayer
 
+import android.app.Application
 import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import retrofit2.Call
@@ -16,7 +18,7 @@ import javax.net.ssl.HttpsURLConnection
 import kotlin.concurrent.fixedRateTimer
 
 
-class MainRepository(private val filesDir: File) {
+class MainRepository(private val dataSource: PlayerDatabaseDao, private val application: Application) {
     val TAG = "MainRepository"
 
     private val contentApiService: ContentApiService = ContentApi.retrofitService
@@ -65,7 +67,8 @@ class MainRepository(private val filesDir: File) {
         campaigns.forEach {
             val link = it.value.content.img
             val ext = mime.getExtensionFromMimeType(getFileType(link))
-            val savePath = "${filesDir.path}/${it.key}.${ext}"
+            val dir = application.applicationContext.filesDir.path
+            val savePath = "${dir}/${it.key}.${ext}"
             download(link, savePath)
             Log.d(TAG, "Downloaded content to ${savePath}")
         }

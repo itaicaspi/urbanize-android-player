@@ -6,12 +6,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import kotlin.concurrent.fixedRateTimer
 
-class MainViewModel(application: Application) : AndroidViewModel(application) {
+class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : AndroidViewModel(application) {
 
-    private val filesDir = application.applicationContext.filesDir
-    private val mainRepository = MainRepository(filesDir)
+//    private val filesDir = application.applicationContext.filesDir
+    private val mainRepository = MainRepository(dataSource, application)
     val authToken: LiveData<AuthProperty> = mainRepository.getAuthToken()
     var campaigns: MutableLiveData<Map<String, ContentProperty>> = mainRepository.getCampaigns(authToken, 60)
 
