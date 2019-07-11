@@ -5,8 +5,10 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.urbanize.urbanizeplayer.database.Campaign
 import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -62,17 +64,61 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
     }
 
 
-    fun downloadCampaignsContent(campaigns: Map<String, ContentProperty>) {
+    fun maybeDownloadCampaignsContent(fetchedCampaigns: Map<String, ContentProperty>) {
         val mime = MimeTypeMap.getSingleton()
-        campaigns.forEach {
-            val link = it.value.content.img
-            val ext = mime.getExtensionFromMimeType(getFileType(link))
-            val dir = application.applicationContext.filesDir.path
-            val savePath = "${dir}/${it.key}.${ext}"
-            download(link, savePath)
-            Log.d(TAG, "Downloaded content to ${savePath}")
+
+        // remove campaigns which are not relevant anymore
+        val allCampaigns = dataSource.getAllCampaigns().value
+        allCampaigns?.forEach {
+            val campaignId = it.id
+            if (!fetchedCampaigns.containsKey(campaignId)) {
+                Log.d(TAG, "Removing campaign $campaignId")
+
+                // remove from DB
+                dataSource.removeCampaign(campaignId)
+
+                // remove from internal storage
+                application.deleteFile(it.pathOnDisk)
+            }
+        }
+
+        // update existing campaigns
+        fetchedCampaigns.forEach {
+            val campaignId = it.key
+            val contentUrl = it.value.content.img
+
+            val campaign = dataSource.getCampaign(campaignId)
+            Log.d(TAG, "Campaign has current value $campaign")
+            if (campaign == null || campaign.originalFilename != contentUrl) {
+                Log.d(TAG, "Updating campaign with current value $campaign")
+
+                // download the file
+                val ext = mime.getExtensionFromMimeType(getFileType(contentUrl))
+                val dir = application.applicationContext.filesDir.path
+                val savePath = "$dir/$campaignId.$ext"
+                download(contentUrl, savePath)
+
+                Log.d(TAG, "Downloaded content to $savePath")
+
+                // remove old content file if necessary
+                if (campaign != null && campaign.pathOnDisk != savePath) {
+                    application.deleteFile(campaign.pathOnDisk)
+                    Log.d(TAG, "Removed old content from ${campaign.pathOnDisk}")
+                }
+
+                // update the database
+                val newCampaign = Campaign(campaignId, contentUrl, savePath)
+                if (campaign == null) {
+                    // this is a new campaign
+                    dataSource.insertCampaign(newCampaign)
+                } else {
+                    // this is an existing campaign which content was updated
+                    dataSource.updateCampaign(newCampaign)
+                }
+            }
         }
     }
+
 
     fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<Map<String, ContentProperty>> {
         val campaigns = MutableLiveData<Map<String, ContentProperty>>()
@@ -89,7 +135,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
                         // download the campaigns content to disk
                         GlobalScope.launch {
-                            downloadCampaignsContent(campaigns.value ?: emptyMap())
+                            maybeDownloadCampaignsContent(campaigns.value ?: emptyMap())
                         }
                     }
 

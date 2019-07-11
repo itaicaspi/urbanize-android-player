@@ -1,10 +1,7 @@
 package com.urbanize.urbanizeplayer.database
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 
 @Dao
 interface PlayerDatabaseDao {
@@ -13,6 +10,9 @@ interface PlayerDatabaseDao {
 
     @Update
     fun updateCampaign(campaign: Campaign)
+
+    @Query("DELETE FROM campaigns WHERE id = :id")
+    fun removeCampaign(id: String)
 
     @Query("SELECT * FROM campaigns WHERE id = :id")
     fun getCampaign(id: String): Campaign?

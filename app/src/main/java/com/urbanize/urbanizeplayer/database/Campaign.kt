@@ -10,5 +10,9 @@ data class Campaign (
     var id: String = "",
 
     @ColumnInfo(name = "original_filename")
-    var originalFilename: String = ""
+    var originalFilename: String = "",
+
+    @ColumnInfo(name = "path_on_disk")
+    var pathOnDisk: String = ""
+
 )
