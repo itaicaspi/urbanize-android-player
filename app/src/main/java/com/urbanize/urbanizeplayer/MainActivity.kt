@@ -45,10 +45,16 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "update campaigns")
 
 //            Toast.makeText(this, newCampaigns.toString(), Toast.LENGTH_LONG).show()
-//            val contentPath = "click1.mp4"
-            val contentPath = newCampaigns[0].pathOnDisk
-            Log.d(TAG, "Switching content to $contentPath")
-            mainWebView.evaluateJavascript("setContent('$contentPath')", null)
+            Log.d(TAG, "Switching content")
+
+            // play first content
+            mainWebView.evaluateJavascript("loadContent('${newCampaigns[0].pathOnDisk}')", null)
+            mainWebView.evaluateJavascript("swapContent()", null)
+
+            // preload one content file
+            mainWebView.evaluateJavascript("loadContent('${newCampaigns[1].pathOnDisk}')", null)
+
+            // TODO: get play end in order to load the next file
         })
 
 //        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)

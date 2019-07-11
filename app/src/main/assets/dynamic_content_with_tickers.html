@@ -60,7 +60,7 @@
     <script type="text/javascript">
       google.load("feeds", "1")
 	</script>
-    <script src="js/dynamic_content.js"></script>
+
 </head>
 
 <script>
@@ -104,6 +104,14 @@ function showRSSFeed(result) {
 
 window.onload = function() {
   fetchRSSFeed();
+  document.getElementById('video_front').addEventListener("ended", function() {
+    //alert("swap front");
+    swapContent();
+  });
+  document.getElementById('video_back').addEventListener("ended", function() {
+    //alert("swap back");
+    swapContent();
+  });
 }
 </script>
 <body>
@@ -113,11 +121,11 @@ window.onload = function() {
     </div>
     <div class="col-9 px-0 h-100">
         <img src="urbanize_ad.png" alt="Ad" class="content" height="100%" id="image_front"/>
-        <video playsInline autoplay muted loop="loop" class="content" style="display: none;" height="100%" id="video_back">
+        <video playsInline autoplay muted class="content" style="display: none;" height="100%" id="video_back">
             <source src="" type="video/mp4" id="source_back">
             Your browser does not support the video tag.
         </video>
-        <video playsInline autoplay muted loop="loop" class="content" style="display: none;" height="100%" id="video_front">
+        <video playsInline autoplay muted class="content" style="display: none;" height="100%" id="video_front">
             <source src="" type="video/mp4" id="source_front">
             Your browser does not support the video tag.
         </video>
@@ -133,5 +141,7 @@ window.onload = function() {
         <img src="img/walla.png" width="100%" class="m-auto pr-4"/>
     </div>
 </div>
+<script src="js/dynamic_content.js"></script>
+
 </body>
 </html>
