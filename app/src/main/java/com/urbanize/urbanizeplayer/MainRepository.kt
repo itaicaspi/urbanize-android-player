@@ -50,7 +50,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         fixedRateTimer("timer", false, 0, 30*30*1000) {
             authApiService.getAuthToken(apiKey, email, password).enqueue(object : Callback<AuthProperty> {
                 override fun onFailure(call: Call<AuthProperty>, t: Throwable) {
-                    TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                    Log.d(TAG, "Failed to fetch auth token. Please check the internet connection.")
+                    Log.d(TAG, t.message?:"")
                 }
 
                 override fun onResponse(call: Call<AuthProperty>, response: Response<AuthProperty>) {
@@ -141,7 +142,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
                     // Error case is left out for brevity.
                     override fun onFailure(call: Call<Map<String, ContentProperty>>, t: Throwable) {
-                        TODO()
+                        Log.d(TAG, "Failed to fetch campaign. It is possible that the authToken was not fetched correctly")
+                        Log.d(TAG, t.message?:"")
                     }
                 })
         }

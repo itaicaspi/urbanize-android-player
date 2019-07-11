@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Urbanize</title>
+	<style>
+		.cover {
+			  position: fixed;
+			  right: 0;
+			  bottom: 0;
+			  min-width: 100%;
+			  min-height: 100%;
+		}
+		.d-none {
+			display: none;
+		}
+	</style>
+	<script src="js/dynamic_content.js"></script>
+</head>
+<body style="background: black">
+	<img src="urbanize_ad.png" alt="Ad" class="cover" id="image_front"/>
+	<video  playsInline autoplay muted loop="loop" class="cover d-none" id="video_back" >
+		<source src="" type="video/mp4" id="source_back">
+		Your browser does not support the video tag.
+	</video>
+	<video  playsInline autoplay muted loop="loop" class="cover d-none" id="video_front" >
+		<source src="" type="video/mp4" id="source_front">
+		Your browser does not support the video tag.
+	</video>
+</body>
+</html>

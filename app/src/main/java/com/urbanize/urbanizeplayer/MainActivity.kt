@@ -12,6 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.urbanize.urbanizeplayer.database.PlayerDatabase
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
@@ -36,14 +37,17 @@ class MainActivity : AppCompatActivity() {
         val viewModelFactory = MainViewModelFactory(dataSource, application)
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel::class.java)
 
+        // initialize the webview player
+        val mainWebView = startWebPlayer()
+
         // update the UI with the fetched campaigns
         viewModel.campaigns.observe(this, Observer {newCampaigns ->
             Log.d(TAG, "update campaigns")
             Log.d(TAG, newCampaigns?.toString()?:"")
 //            Toast.makeText(this, newCampaigns.toString(), Toast.LENGTH_LONG).show()
+            val contentPath = "click1.mp4"
+            mainWebView.evaluateJavascript("setContent('$contentPath')", null)
         })
-
-        Log.d(TAG, "files dir ${this.filesDir.path}")
 
 //        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
 //        if (permission != PackageManager.PERMISSION_GRANTED) {
@@ -51,11 +55,10 @@ class MainActivity : AppCompatActivity() {
 //            return
 //        }
 
-        // initialize the webview player
-        startWebPlayer()
+
     }
 
-    private fun startWebPlayer() {
+    private fun startWebPlayer(): WebView {
         // get the webview and load the video html5 template
         val mainWebView: WebView = findViewById(R.id.webview)
         mainWebView.webChromeClient = WebChromeClient()
@@ -64,8 +67,10 @@ class MainActivity : AppCompatActivity() {
         mainWebView.settings.setAppCacheEnabled(true)
         mainWebView.settings.domStorageEnabled = true
         mainWebView.settings.databaseEnabled = true
-        mainWebView.loadUrl("http://10.42.0.1:5000/dynamic_content")
-//        mainWebView.loadUrl("file:///android_asset/video.html")
+//        mainWebView.loadUrl("http://10.42.0.1:5000/dynamic_content")
+        mainWebView.loadUrl("file:///android_asset/dynamic_content.html")
+
+        return mainWebView
     }
 
 }
