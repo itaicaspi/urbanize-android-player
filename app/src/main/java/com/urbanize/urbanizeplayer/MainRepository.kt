@@ -66,8 +66,10 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
     }
 
 
-    fun maybeDownloadCampaignsContent(fetchedCampaigns: Map<String, ContentProperty>) {
+    fun maybeDownloadCampaignsContent(fetchedCampaigns: Map<String, ContentProperty>): Boolean {
         val mime = MimeTypeMap.getSingleton()
+
+        var campaignsChanged = false
 
         // remove campaigns which are not relevant anymore
         val allCampaigns = dataSource.getAllCampaigns()
@@ -82,6 +84,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
                 // remove from internal storage
                 File(it.pathOnDisk).delete()
+
+                campaignsChanged = true
             }
         }
 
@@ -118,8 +122,12 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
                     // this is an existing campaign which content was updated
                     dataSource.updateCampaign(newCampaign)
                 }
+
+                campaignsChanged = true
             }
         }
+
+        return campaignsChanged
     }
 
 
@@ -129,7 +137,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
             val allCampaigns = dataSource.getAllCampaigns()
             campaigns.postValue(allCampaigns) // TODO: do this again after updating the DB
         }
-        fixedRateTimer("timer", false, 300*1000, periodInSec*1000) {
+        fixedRateTimer("timer", false, 10*1000, periodInSec*1000) {
             contentApiService.getCampaigns(authToken.value?.idToken ?: "")
                 .enqueue(object : Callback<Map<String, ContentProperty>> {
                     override fun onResponse(
@@ -141,8 +149,11 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
                         // download the campaigns content to disk
                         GlobalScope.launch {
-                            maybeDownloadCampaignsContent(rawCampaigns ?: emptyMap())
-                            campaigns.postValue(dataSource.getAllCampaigns()) // TODO: do this again after updating the DB
+                            val campaignsChanged = maybeDownloadCampaignsContent(rawCampaigns ?: emptyMap())
+
+                            if (campaignsChanged) {
+                                campaigns.postValue(dataSource.getAllCampaigns())
+                            }
                         }
                     }
 

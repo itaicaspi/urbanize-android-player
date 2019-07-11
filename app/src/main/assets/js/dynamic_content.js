@@ -25,13 +25,13 @@ function loadContent(content, delay=0) {
         if (videoToLoad == "front") {
             frontSource.setAttribute('src', content);
             frontVideo.load();
-            frontVideo.play();
+            frontVideo.currentTime = 0.1;
             frontVideo.pause();
             videoToLoad = "back";
         } else {
             backSource.setAttribute('src', content);
             backVideo.load();
-            backVideo.play();
+            backVideo.currentTime = 0.1;
             backVideo.pause();
             videoToLoad = "front";
         }
@@ -43,7 +43,7 @@ function loadContent(content, delay=0) {
 
 var videoToShow = "front";
 function swapContent() {
-    var playDelay = 700;
+    var playDelay = 100;
     var imagePlayTime = 6*1000;
 
     var frontImage = document.getElementById('image_front');
@@ -75,14 +75,12 @@ function swapContent() {
     if (nextContentType == "video") {
         if (videoToShow == "front") {
             // if the video is ready, show it. otherwise, set an event handler to show it when it is ready.
-            if (frontVideo.readyState >= 2) { // HAVE_CURRENT_DATA
+            if (frontVideo.readyState >= 3) { // HAVE_CURRENT_DATA
                 frontVideo.play();
-//                showFrontVideo();
                 window.setTimeout(showFrontVideo, playDelay);
             } else {
                 var frontVideoLoadedHandler = function() {
                     frontVideo.play();
-//                    showFrontVideo();
                     window.setTimeout(showFrontVideo, playDelay);
                     frontVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
                 }
@@ -91,14 +89,12 @@ function swapContent() {
             videoToShow = "back";
         } else {
             // if the video is ready, show it. otherwise, set an event handler to show it when it is ready.
-            if (backVideo.readyState >= 2) { // HAVE_CURRENT_DATA
+            if (backVideo.readyState >= 3) { // HAVE_CURRENT_DATA
                 backVideo.play();
-//                showBackVideo();
                 window.setTimeout(showBackVideo, playDelay);
             } else {
                 var backVideoLoadedHandler = function() {
                     backVideo.play();
-//                    showBackVideo();
                     window.setTimeout(showBackVideo, playDelay);
                     backVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
                 }
@@ -112,52 +108,3 @@ function swapContent() {
     }
 }
 
-
-
-var videoToChange = "front";
-function setContent(content) {
-    var contentType = checkContentType(content);
-
-    var frontImage = document.getElementById('image_front');
-    var frontVideo = document.getElementById('video_front');
-    var backVideo = document.getElementById('video_back');
-    var backSource = document.getElementById('source_back');
-    var frontSource = document.getElementById('source_front');
-
-    // we swap between two video players such that none of them will be visible while loading a new video.
-    // if we wouldn't do it this way, the screen would be black in between video swaps
-    if (contentType == "video") {
-        if (videoToChange == "front") {
-            frontSource.setAttribute('src', content);
-            frontVideo.load();
-            frontVideo.play();
-
-            var frontVideoLoadedHandler = function() {
-                frontVideo.style.display = "block";
-                backVideo.style.display = "none";
-                frontImage.style.display = "none";
-                frontVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
-            }
-            frontVideo.addEventListener("loadeddata", frontVideoLoadedHandler)
-            videoToChange = "back";
-        } else {
-            backSource.setAttribute('src', content);
-            backVideo.load();
-            backVideo.play();
-
-            var backVideoLoadedHandler = function() {
-                backVideo.style.display = "block";
-                frontVideo.style.display = "none";
-                frontImage.style.display = "none";
-                backVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
-            }
-            frontVideo.addEventListener("loadeddata", frontVideoLoadedHandler)
-            videoToChange = "front";
-        }
-    } else {
-        frontImage.setAttribute('src', content);
-        frontImage.style.display = "block";
-        backVideo.style.display = "none";
-        frontVideo.style.display = "none";
-    }
-}

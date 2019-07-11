@@ -10,6 +10,8 @@ import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.urbanize.urbanizeplayer.database.PlayerDatabase
@@ -41,6 +43,15 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mainWebView: WebView
 
+    fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observer<T>) {
+        observe(lifecycleOwner, object : Observer<T> {
+            override fun onChanged(t: T?) {
+                removeObserver(this)
+                observer.onChanged(t)
+            }
+        })
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -62,7 +73,7 @@ class MainActivity : AppCompatActivity() {
 //        }, 1000)
 
         // update the UI with the fetched campaigns
-        viewModel.campaigns.observe(this, Observer {newCampaigns ->
+        viewModel.campaigns.observeOnce(this, Observer {newCampaigns ->
             Log.d(TAG, "update campaigns")
             Log.d(TAG, newCampaigns.toString())
 
