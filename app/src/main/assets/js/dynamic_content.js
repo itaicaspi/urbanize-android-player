@@ -9,7 +9,7 @@ function checkContentType(url){
 
 var videoToLoad = "front";
 var nextContentType = "video";
-function loadContent(content) {
+function loadContent(content, delay=0) {
     var contentType = checkContentType(content);
     nextContentType = contentType;
 
@@ -25,11 +25,13 @@ function loadContent(content) {
         if (videoToLoad == "front") {
             frontSource.setAttribute('src', content);
             frontVideo.load();
+            frontVideo.play();
             frontVideo.pause();
             videoToLoad = "back";
         } else {
             backSource.setAttribute('src', content);
             backVideo.load();
+            backVideo.play();
             backVideo.pause();
             videoToLoad = "front";
         }
@@ -41,7 +43,7 @@ function loadContent(content) {
 
 var videoToShow = "front";
 function swapContent() {
-    var playDelay = 300;
+    var playDelay = 700;
     var imagePlayTime = 6*1000;
 
     var frontImage = document.getElementById('image_front');
@@ -75,10 +77,12 @@ function swapContent() {
             // if the video is ready, show it. otherwise, set an event handler to show it when it is ready.
             if (frontVideo.readyState >= 2) { // HAVE_CURRENT_DATA
                 frontVideo.play();
+//                showFrontVideo();
                 window.setTimeout(showFrontVideo, playDelay);
             } else {
                 var frontVideoLoadedHandler = function() {
                     frontVideo.play();
+//                    showFrontVideo();
                     window.setTimeout(showFrontVideo, playDelay);
                     frontVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
                 }
@@ -89,10 +93,12 @@ function swapContent() {
             // if the video is ready, show it. otherwise, set an event handler to show it when it is ready.
             if (backVideo.readyState >= 2) { // HAVE_CURRENT_DATA
                 backVideo.play();
+//                showBackVideo();
                 window.setTimeout(showBackVideo, playDelay);
             } else {
                 var backVideoLoadedHandler = function() {
                     backVideo.play();
+//                    showBackVideo();
                     window.setTimeout(showBackVideo, playDelay);
                     backVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
                 }

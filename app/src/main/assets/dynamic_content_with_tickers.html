@@ -105,12 +105,12 @@ function showRSSFeed(result) {
 window.onload = function() {
   fetchRSSFeed();
   document.getElementById('video_front').addEventListener("ended", function() {
-    //alert("swap front");
     swapContent();
+    injectedObject.videoEnded();
   });
   document.getElementById('video_back').addEventListener("ended", function() {
-    //alert("swap back");
     swapContent();
+    injectedObject.videoEnded();
   });
 }
 </script>

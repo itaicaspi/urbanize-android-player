@@ -2,8 +2,10 @@ package com.urbanize.urbanizeplayer
 
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
+import android.webkit.JavascriptInterface
 import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -24,6 +26,21 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: MainViewModel
 
+    private inner class JsObject {
+        @JavascriptInterface
+        fun videoEnded() {
+            viewModel.nextCampaign()
+            val campaignToLoad = viewModel.nextCampaignToPreload()
+            Log.d("campaign to load", campaignToLoad?.pathOnDisk.toString())
+            runOnUiThread {
+                mainWebView.evaluateJavascript("window.setTimeout(function() { loadContent('${campaignToLoad?.pathOnDisk}') }, 2000)", null)
+            }
+
+        }
+    }
+
+    private lateinit var mainWebView: WebView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -38,23 +55,28 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProviders.of(this, viewModelFactory).get(MainViewModel::class.java)
 
         // initialize the webview player
-        val mainWebView = startWebPlayer()
+        mainWebView = startWebPlayer()
+
+//        Handler().postDelayed({
+//            //doSomethingHere()
+//        }, 1000)
 
         // update the UI with the fetched campaigns
         viewModel.campaigns.observe(this, Observer {newCampaigns ->
             Log.d(TAG, "update campaigns")
+            Log.d(TAG, newCampaigns.toString())
 
 //            Toast.makeText(this, newCampaigns.toString(), Toast.LENGTH_LONG).show()
-            Log.d(TAG, "Switching content")
 
-            // play first content
-            mainWebView.evaluateJavascript("loadContent('${newCampaigns[0].pathOnDisk}')", null)
-            mainWebView.evaluateJavascript("swapContent()", null)
+            Handler().postDelayed({
+                // play first content
+                mainWebView.evaluateJavascript("loadContent('${newCampaigns[0].pathOnDisk}')", null)
+                mainWebView.evaluateJavascript("swapContent()", null)
 
-            // preload one content file
-            mainWebView.evaluateJavascript("loadContent('${newCampaigns[1].pathOnDisk}')", null)
+                // preload one content file
+                mainWebView.evaluateJavascript("loadContent('${newCampaigns[1].pathOnDisk}')", null)
+            }, 2000)
 
-            // TODO: get play end in order to load the next file
         })
 
 //        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -75,6 +97,10 @@ class MainActivity : AppCompatActivity() {
         mainWebView.settings.setAppCacheEnabled(true)
         mainWebView.settings.domStorageEnabled = true
         mainWebView.settings.databaseEnabled = true
+
+        mainWebView.addJavascriptInterface(JsObject(), "injectedObject")
+//        mainWebView.loadUrl("javascript:alert(injectedObject.toString())")
+
 //        mainWebView.loadUrl("http://10.42.0.1:5000/dynamic_content")
         mainWebView.loadUrl("file:///android_asset/dynamic_content_with_tickers.html")
 

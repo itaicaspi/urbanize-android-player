@@ -16,12 +16,22 @@ class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : A
     private val mainRepository = MainRepository(dataSource, application)
     val authToken: LiveData<AuthProperty> = mainRepository.getAuthToken()
     var campaigns: MutableLiveData<List<Campaign>> = mainRepository.getCampaigns(authToken, 60)
+    var currentRunningCampaign: Int = 0
 
     private val TAG = "MainViewModel"
 
     init {
         Log.d(TAG, application.applicationContext.filesDir.path)
         Log.i(TAG, "MainViewModel Created")
+    }
+
+    fun nextCampaign() {
+        currentRunningCampaign = (currentRunningCampaign + 1) % (campaigns.value?.size ?: 1)
+    }
+
+    fun nextCampaignToPreload(): Campaign? {
+        val nextCampaignIdx = (currentRunningCampaign + 1) % (campaigns.value?.size ?: 1)
+        return campaigns.value?.get(nextCampaignIdx)
     }
 
     override fun onCleared() {

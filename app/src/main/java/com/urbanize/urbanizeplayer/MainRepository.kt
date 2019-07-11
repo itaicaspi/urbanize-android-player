@@ -81,7 +81,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
                 dataSource.removeCampaign(campaignId)
 
                 // remove from internal storage
-                application.deleteFile(it.pathOnDisk)
+                File(it.pathOnDisk).delete()
             }
         }
 
@@ -125,8 +125,11 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
     fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<List<Campaign>> {
         val campaigns = MutableLiveData<List<Campaign>>()
-
-        fixedRateTimer("timer", false, 10*1000, periodInSec*1000) {
+        GlobalScope.launch {
+            val allCampaigns = dataSource.getAllCampaigns()
+            campaigns.postValue(allCampaigns) // TODO: do this again after updating the DB
+        }
+        fixedRateTimer("timer", false, 300*1000, periodInSec*1000) {
             contentApiService.getCampaigns(authToken.value?.idToken ?: "")
                 .enqueue(object : Callback<Map<String, ContentProperty>> {
                     override fun onResponse(
@@ -138,8 +141,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
                         // download the campaigns content to disk
                         GlobalScope.launch {
-                            campaigns.postValue(dataSource.getAllCampaigns()) // TODO: do this again after updating the DB
                             maybeDownloadCampaignsContent(rawCampaigns ?: emptyMap())
+                            campaigns.postValue(dataSource.getAllCampaigns()) // TODO: do this again after updating the DB
                         }
                     }
 
