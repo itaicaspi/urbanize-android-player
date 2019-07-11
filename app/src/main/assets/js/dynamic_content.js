@@ -23,22 +23,27 @@ function setContent(content) {
             frontSource.setAttribute('src', content);
             frontVideo.load();
             frontVideo.play();
-            window.setTimeout(function() {
+
+            var frontVideoLoadedHandler = function() {
                 frontVideo.style.display = "block";
                 backVideo.style.display = "none";
                 frontImage.style.display = "none";
-            }, 500);
-
+                frontVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
+            }
+            frontVideo.addEventListener("loadeddata", frontVideoLoadedHandler)
             videoToChange = "back";
         } else {
             backSource.setAttribute('src', content);
             backVideo.load();
             backVideo.play();
-            window.setTimeout(function() {
+
+            var backVideoLoadedHandler = function() {
                 backVideo.style.display = "block";
                 frontVideo.style.display = "none";
                 frontImage.style.display = "none";
-            }, 500);
+                backVideo.removeEventListener("loadeddata", frontVideoLoadedHandler)
+            }
+            frontVideo.addEventListener("loadeddata", frontVideoLoadedHandler)
             videoToChange = "front";
         }
     } else {

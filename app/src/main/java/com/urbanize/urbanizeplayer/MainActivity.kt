@@ -70,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         mainWebView.settings.domStorageEnabled = true
         mainWebView.settings.databaseEnabled = true
 //        mainWebView.loadUrl("http://10.42.0.1:5000/dynamic_content")
-        mainWebView.loadUrl("file:///android_asset/dynamic_content.html")
+        mainWebView.loadUrl("file:///android_asset/dynamic_content_with_tickers.html")
 
         return mainWebView
     }
