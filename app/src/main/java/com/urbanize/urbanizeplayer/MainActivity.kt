@@ -43,9 +43,11 @@ class MainActivity : AppCompatActivity() {
         // update the UI with the fetched campaigns
         viewModel.campaigns.observe(this, Observer {newCampaigns ->
             Log.d(TAG, "update campaigns")
-            Log.d(TAG, newCampaigns?.toString()?:"")
+
 //            Toast.makeText(this, newCampaigns.toString(), Toast.LENGTH_LONG).show()
-            val contentPath = "click1.mp4"
+//            val contentPath = "click1.mp4"
+            val contentPath = newCampaigns[0].pathOnDisk
+            Log.d(TAG, "Switching content to $contentPath")
             mainWebView.evaluateJavascript("setContent('$contentPath')", null)
         })
 

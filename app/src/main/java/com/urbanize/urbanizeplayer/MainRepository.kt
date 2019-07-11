@@ -5,6 +5,7 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.urbanize.urbanizeplayer.database.Campaign
 import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import kotlinx.coroutines.GlobalScope
@@ -69,7 +70,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         val mime = MimeTypeMap.getSingleton()
 
         // remove campaigns which are not relevant anymore
-        val allCampaigns = dataSource.getAllCampaigns().value
+        val allCampaigns = dataSource.getAllCampaigns()
+        Log.d(TAG, "Current campaigns are: $allCampaigns")
         allCampaigns?.forEach {
             val campaignId = it.id
             if (!fetchedCampaigns.containsKey(campaignId)) {
@@ -121,8 +123,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
     }
 
 
-    fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<Map<String, ContentProperty>> {
-        val campaigns = MutableLiveData<Map<String, ContentProperty>>()
+    fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<List<Campaign>> {
+        val campaigns = MutableLiveData<List<Campaign>>()
 
         fixedRateTimer("timer", false, 10*1000, periodInSec*1000) {
             contentApiService.getCampaigns(authToken.value?.idToken ?: "")
@@ -131,12 +133,13 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
                         call: Call<Map<String, ContentProperty>>,
                         response: Response<Map<String, ContentProperty>>
                     ) {
-                        campaigns.value = response.body()
-                        Log.d(TAG, campaigns.value.toString())
+                        val rawCampaigns = response.body()
+                        Log.d(TAG, rawCampaigns.toString())
 
                         // download the campaigns content to disk
                         GlobalScope.launch {
-                            maybeDownloadCampaignsContent(campaigns.value ?: emptyMap())
+                            campaigns.postValue(dataSource.getAllCampaigns()) // TODO: do this again after updating the DB
+                            maybeDownloadCampaignsContent(rawCampaigns ?: emptyMap())
                         }
                     }
 

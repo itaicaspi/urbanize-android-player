@@ -21,5 +21,5 @@ interface PlayerDatabaseDao {
     fun clearCampaigns()
 
     @Query("SELECT * FROM campaigns ORDER BY id DESC")
-    fun getAllCampaigns(): LiveData<List<Campaign>>
+    fun getAllCampaigns(): List<Campaign>
 }
