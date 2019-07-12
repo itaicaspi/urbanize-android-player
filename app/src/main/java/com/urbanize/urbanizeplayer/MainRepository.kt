@@ -208,20 +208,22 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
     fun updateDeviceStatus(status: String, authToken: LiveData<AuthProperty>) {
         val statusProperty = DeviceStatusProperty(status)
-        firebaseApiService.updateDeviceStatus(statusProperty, authToken.value?.idToken ?: "")
-            .enqueue(object : Callback<Map<String, String>> {
-                override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
-                    Log.d(TAG, "Failed to set status. It is possible that the authToken was not fetched correctly")
-                    Log.d(TAG, t.message?:"")
-                }
+        GlobalScope.launch {
+            firebaseApiService.updateDeviceStatus(statusProperty, authToken.value?.idToken ?: "")
+                .enqueue(object : Callback<Map<String, String>> {
+                    override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                        Log.d(TAG, "Failed to set status. It is possible that the authToken was not fetched correctly")
+                        Log.d(TAG, t.message?:"")
+                    }
 
-                override fun onResponse(
-                    call: Call<Map<String, String>>,
-                    response: Response<Map<String, String>>
-                ) {
-                    Log.d(TAG, "Device status updated successfully")
-                }
-            })
+                    override fun onResponse(
+                        call: Call<Map<String, String>>,
+                        response: Response<Map<String, String>>
+                    ) {
+                        Log.d(TAG, "Device status updated successfully")
+                    }
+                })
+        }
     }
 
 }

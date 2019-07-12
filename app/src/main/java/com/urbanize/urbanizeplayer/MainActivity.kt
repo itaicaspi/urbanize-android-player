@@ -62,7 +62,6 @@ class MainActivity : AppCompatActivity() {
 
         // start backend updates once we have an authentication token
         viewModel.authToken.observeOnce(this, Observer {
-            // TODO: this seems to freeze the activity for 1 second. why?
             viewModel.startupDeviceUpdates()
         })
 
