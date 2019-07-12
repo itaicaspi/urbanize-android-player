@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import com.urbanize.urbanizeplayer.database.Campaign
 import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import com.urbanize.urbanizeplayer.network.AuthProperty
@@ -22,6 +23,11 @@ class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : A
     init {
         Log.d(TAG, application.applicationContext.filesDir.path)
         Log.i(TAG, "MainViewModel Created")
+    }
+
+    fun startupDeviceUpdates() {
+        mainRepository.sendDeviceIsAlive(authToken, 5)
+        mainRepository.updateDeviceStatus("loading", authToken)
     }
 
     fun nextCampaign() {

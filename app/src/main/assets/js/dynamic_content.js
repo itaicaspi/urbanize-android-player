@@ -112,7 +112,10 @@ function swapContent() {
         }
     } else {
         showImage();
-        window.setTimeout(swapContent, imagePlayTime);
+        window.setTimeout(function() {
+            swapContent();
+            injectedObject.videoEnded();
+        }, imagePlayTime);
     }
 }
 

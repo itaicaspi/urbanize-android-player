@@ -25,6 +25,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
     private val firebaseApiService: FirebaseApiService = FirebaseApi.retrofitService
     private val authApiService: AuthApiService = AuthApi.retrofitService
+    private val resourceManager: ResourceManager = ResourceManager()
 
     fun getFileType(path: String): String {
         val url = URL(path)
@@ -45,8 +46,8 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         val authToken = MutableLiveData<AuthProperty>()
 
         val apiKey = "AIzaSyC341Xx6m5yGZMZJ93xaWmf7JOcVF1e4tc"
-        val email = "itai@urbanize.co"
-        val password = "!2218Lati"
+        val email = "device_android-1@urbanize.co"//"itai@urbanize.co"
+        val password = "Czj.bkn51aYxllIDjA1wDm_Ht-wcWkIH"//"!2218Lati"
         fixedRateTimer("timer", false, 0, 30*30*1000) {
             authApiService.getAuthToken(apiKey, email, password).enqueue(object : Callback<AuthProperty> {
                 override fun onFailure(call: Call<AuthProperty>, t: Throwable) {
@@ -130,13 +131,21 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
     }
 
 
-    fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long): MutableLiveData<List<Campaign>> {
+    fun getCampaigns(authToken: LiveData<AuthProperty>, periodInSec: Long, initialDelayInSec: Long=10): MutableLiveData<List<Campaign>> {
         val campaigns = MutableLiveData<List<Campaign>>()
+
+        // first, get the current campaigns from the local database
         GlobalScope.launch {
             val allCampaigns = dataSource.getAllCampaigns()
-            campaigns.postValue(allCampaigns) // TODO: do this again after updating the DB
+            if (allCampaigns.isNotEmpty()) {
+                campaigns.postValue(allCampaigns)
+            } else {
+                campaigns.postValue(listOf(Campaign(pathOnDisk = "urbanize_ad.png")))  // TODO: improve this line
+            }
         }
-        fixedRateTimer("timer", false, 10*1000, periodInSec*1000) {
+
+        // setup a timer to fetch new campaigns every periodInSec seconds
+        fixedRateTimer("timer", false, initialDelayInSec*1000, periodInSec*1000) {
             firebaseApiService.getCampaigns(authToken.value?.idToken ?: "")
                 .enqueue(object : Callback<Map<String, ContentProperty>> {
                     override fun onResponse(
@@ -151,7 +160,12 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
                             val campaignsChanged = maybeDownloadCampaignsContent(rawCampaigns ?: emptyMap())
 
                             if (campaignsChanged) {
-                                campaigns.postValue(dataSource.getAllCampaigns())
+                                val allCampaigns = dataSource.getAllCampaigns()
+                                if (allCampaigns.isNotEmpty()) {
+                                    campaigns.postValue(allCampaigns)
+                                } else {
+                                    campaigns.postValue(listOf(Campaign(pathOnDisk = "urbanize_ad.png")))  // TODO: improve this line
+                                }
                             }
                         }
                     }
@@ -165,6 +179,49 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         }
 
         return campaigns
+    }
+
+
+    fun sendDeviceIsAlive(authToken: LiveData<AuthProperty>, periodInSec: Long, initialDelayInSec: Long=10) {
+        fixedRateTimer("timer", false, initialDelayInSec*1000, periodInSec*1000) {
+            val status = IsAliveUpdateProperty(
+                System.currentTimeMillis() / 1000,
+                100 * resourceManager.getMemoryUsage().availableSize / resourceManager.getMemoryUsage().totalSize,
+                resourceManager.getDiskUsage().availableSize / 1024L
+            ) // TODO: get complete value from resource manager
+            firebaseApiService.sendDeviceIsAlive(status, authToken.value?.idToken ?: "")
+                .enqueue(object : Callback<Map<String, String>> {
+                    override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                        Log.d(TAG, "Failed to send is alive update. It is possible that the authToken was not fetched correctly")
+                        Log.d(TAG, t.message?:"")
+                    }
+
+                    override fun onResponse(
+                        call: Call<Map<String, String>>,
+                        response: Response<Map<String, String>>
+                    ) {
+                        Log.d(TAG, "Device is alive update sent successfully")
+                    }
+                })
+        }
+    }
+
+    fun updateDeviceStatus(status: String, authToken: LiveData<AuthProperty>) {
+        val statusProperty = DeviceStatusProperty(status)
+        firebaseApiService.updateDeviceStatus(statusProperty, authToken.value?.idToken ?: "")
+            .enqueue(object : Callback<Map<String, String>> {
+                override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                    Log.d(TAG, "Failed to set status. It is possible that the authToken was not fetched correctly")
+                    Log.d(TAG, t.message?:"")
+                }
+
+                override fun onResponse(
+                    call: Call<Map<String, String>>,
+                    response: Response<Map<String, String>>
+                ) {
+                    Log.d(TAG, "Device status updated successfully")
+                }
+            })
     }
 
 }

@@ -44,15 +44,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var mainWebView: WebView
 
-    fun <T> LiveData<T>.observeOnce(lifecycleOwner: LifecycleOwner, observer: Observer<T>) {
-        observe(lifecycleOwner, object : Observer<T> {
-            override fun onChanged(t: T?) {
-                removeObserver(this)
-                observer.onChanged(t)
-            }
-        })
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -69,9 +60,11 @@ class MainActivity : AppCompatActivity() {
         // initialize the webview player
         mainWebView = startWebPlayer()
 
-//        Handler().postDelayed({
-//            //doSomethingHere()
-//        }, 1000)
+        // start backend updates once we have an authentication token
+        viewModel.authToken.observeOnce(this, Observer {
+            // TODO: this seems to freeze the activity for 1 second. why?
+            viewModel.startupDeviceUpdates()
+        })
 
         // update the UI with the fetched campaigns
         viewModel.campaigns.observeOnce(this, Observer {newCampaigns ->
@@ -86,18 +79,10 @@ class MainActivity : AppCompatActivity() {
                 mainWebView.evaluateJavascript("swapContent()", null)
 
                 // preload one content file
-                mainWebView.evaluateJavascript("loadContent('${newCampaigns[1].pathOnDisk}')", null)
+                mainWebView.evaluateJavascript("loadContent('${viewModel.nextCampaignToPreload()?.pathOnDisk}')", null)
             }, 2000)
 
         })
-
-//        val permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//        if (permission != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 1240)
-//            return
-//        }
-
-
     }
 
     private fun startWebPlayer(): WebView {

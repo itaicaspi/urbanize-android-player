@@ -5,10 +5,10 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Query
+import retrofit2.http.*
 
 private const val BASE_URL = "https://urbanize-24ffc.firebaseio.com/"
+private const val DEVICE_ID = "ehRACOVcj5g4OUYvG2qugkmaTba2"   // TODO: get device id
 
 private val moshi = Moshi.Builder()
     .add(KotlinJsonAdapterFactory())
@@ -20,8 +20,14 @@ private val retrofit = Retrofit.Builder()
     .build()
 
 interface FirebaseApiService {
-    @GET("campaigns/-L_nVNhCiSpTZPO482EC.json")  // TODO: replace path with upcoming_campaigns_per_device
+    @GET("upcoming_campaigns_per_device/$DEVICE_ID.json")
     fun getCampaigns(@Query("auth") auth: String): Call<Map<String, ContentProperty>>
+
+    @POST("status_updates/$DEVICE_ID.json")
+    fun sendDeviceIsAlive(@Body status: IsAliveUpdateProperty, @Query("auth") auth: String): Call<Map<String, String>>
+
+    @PATCH("devices/$DEVICE_ID.json")
+    fun updateDeviceStatus(@Body status: DeviceStatusProperty, @Query("auth") auth: String): Call<Map<String, String>>
 }
 
 object FirebaseApi {
