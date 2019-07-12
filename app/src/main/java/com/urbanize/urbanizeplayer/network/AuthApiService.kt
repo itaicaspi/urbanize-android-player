@@ -1,4 +1,4 @@
-package com.urbanize.urbanizeplayer
+package com.urbanize.urbanizeplayer.network
 
 import com.google.firebase.database.IgnoreExtraProperties
 import com.squareup.moshi.Moshi

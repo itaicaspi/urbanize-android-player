@@ -31,13 +31,14 @@ class MainActivity : AppCompatActivity() {
     private inner class JsObject {
         @JavascriptInterface
         fun videoEnded() {
+            // get the next campaign content and preload it
             viewModel.nextCampaign()
             val campaignToLoad = viewModel.nextCampaignToPreload()
             Log.d("campaign to load", campaignToLoad?.pathOnDisk.toString())
             runOnUiThread {
-                mainWebView.evaluateJavascript("window.setTimeout(function() { loadContent('${campaignToLoad?.pathOnDisk}') }, 2000)", null)
+                // wait for 1 seconds for the video to be hidden and then load the next content
+                mainWebView.evaluateJavascript("window.setTimeout(function() { loadContent('${campaignToLoad?.pathOnDisk}') }, 1000)", null)
             }
-
         }
     }
 

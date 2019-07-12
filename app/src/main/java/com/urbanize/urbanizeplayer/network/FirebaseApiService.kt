@@ -1,4 +1,4 @@
-package com.urbanize.urbanizeplayer
+package com.urbanize.urbanizeplayer.network
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -19,13 +19,13 @@ private val retrofit = Retrofit.Builder()
     .baseUrl(BASE_URL)
     .build()
 
-interface ContentApiService {
+interface FirebaseApiService {
     @GET("campaigns/-L_nVNhCiSpTZPO482EC.json")  // TODO: replace path with upcoming_campaigns_per_device
     fun getCampaigns(@Query("auth") auth: String): Call<Map<String, ContentProperty>>
 }
 
-object ContentApi {
-    val retrofitService : ContentApiService by lazy {
-        retrofit.create(ContentApiService::class.java)
+object FirebaseApi {
+    val retrofitService : FirebaseApiService by lazy {
+        retrofit.create(FirebaseApiService::class.java)
     }
 }

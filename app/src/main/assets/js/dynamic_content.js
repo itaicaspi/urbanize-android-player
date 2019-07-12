@@ -22,16 +22,17 @@ function loadContent(content, delay=0) {
     // we swap between two video players such that none of them will be visible while loading a new video.
     // if we wouldn't do it this way, the screen would be black in between video swaps
     if (contentType == "video") {
+        // load the next video into place (it is still hidden behind the current video)
         if (videoToLoad == "front") {
             frontSource.setAttribute('src', content);
             frontVideo.load();
-            frontVideo.currentTime = 0.1;
+            frontVideo.currentTime = 0.1;  // this is needed in order to show the video and prevent a black screen
             frontVideo.pause();
             videoToLoad = "back";
         } else {
             backSource.setAttribute('src', content);
             backVideo.load();
-            backVideo.currentTime = 0.1;
+            backVideo.currentTime = 0.1; // this is needed in order to show the video and prevent a black screen
             backVideo.pause();
             videoToLoad = "front";
         }
@@ -43,7 +44,8 @@ function loadContent(content, delay=0) {
 
 var videoToShow = "front";
 function swapContent() {
-    var playDelay = 100;
+    var playDelay = 1;
+    var hideDelay = 200;
     var imagePlayTime = 6*1000;
 
     var frontImage = document.getElementById('image_front');
@@ -54,20 +56,26 @@ function swapContent() {
 
     var showBackVideo = function() {
         backVideo.style.display = "block";
-        frontVideo.style.display = "none";
-        frontImage.style.display = "none";
+        window.setTimeout(function() {
+            frontVideo.style.display = "none";
+            frontImage.style.display = "none";
+        }, hideDelay)
     }
 
     var showFrontVideo = function() {
         frontVideo.style.display = "block";
-        backVideo.style.display = "none";
-        frontImage.style.display = "none";
+        window.setTimeout(function() {
+            backVideo.style.display = "none";
+            frontImage.style.display = "none";
+        }, hideDelay)
     }
 
     var showImage = function() {
         frontImage.style.display = "block";
-        backVideo.style.display = "none";
-        frontVideo.style.display = "none";
+        window.setTimeout(function() {
+            backVideo.style.display = "none";
+            frontVideo.style.display = "none";
+        }, hideDelay);
     }
 
     // we swap between two video players such that none of them will be visible while loading a new video.

@@ -5,11 +5,10 @@ import android.util.Log
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import com.urbanize.urbanizeplayer.database.Campaign
 import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
+import com.urbanize.urbanizeplayer.network.*
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import retrofit2.Call
 import retrofit2.Callback
@@ -24,7 +23,7 @@ import kotlin.concurrent.fixedRateTimer
 class MainRepository(private val dataSource: PlayerDatabaseDao, private val application: Application) {
     val TAG = "MainRepository"
 
-    private val contentApiService: ContentApiService = ContentApi.retrofitService
+    private val firebaseApiService: FirebaseApiService = FirebaseApi.retrofitService
     private val authApiService: AuthApiService = AuthApi.retrofitService
 
     fun getFileType(path: String): String {
@@ -138,7 +137,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
             campaigns.postValue(allCampaigns) // TODO: do this again after updating the DB
         }
         fixedRateTimer("timer", false, 10*1000, periodInSec*1000) {
-            contentApiService.getCampaigns(authToken.value?.idToken ?: "")
+            firebaseApiService.getCampaigns(authToken.value?.idToken ?: "")
                 .enqueue(object : Callback<Map<String, ContentProperty>> {
                     override fun onResponse(
                         call: Call<Map<String, ContentProperty>>,
