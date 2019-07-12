@@ -26,6 +26,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
     private val firebaseApiService: FirebaseApiService = FirebaseApi.retrofitService
     private val authApiService: AuthApiService = AuthApi.retrofitService
     private val resourceManager: ResourceManager = ResourceManager()
+    private var sendIsAliveUpdates = true
 
     fun getFileType(path: String): String {
         val url = URL(path)
@@ -145,7 +146,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         }
 
         // setup a timer to fetch new campaigns every periodInSec seconds
-        fixedRateTimer("timer", false, initialDelayInSec*1000, periodInSec*1000) {
+        fixedRateTimer("campaignsTimer", false, initialDelayInSec*1000, periodInSec*1000) {
             firebaseApiService.getCampaigns(authToken.value?.idToken ?: "")
                 .enqueue(object : Callback<Map<String, ContentProperty>> {
                     override fun onResponse(
@@ -183,26 +184,29 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
 
 
     fun sendDeviceIsAlive(authToken: LiveData<AuthProperty>, periodInSec: Long, initialDelayInSec: Long=10) {
-        fixedRateTimer("timer", false, initialDelayInSec*1000, periodInSec*1000) {
-            val status = IsAliveUpdateProperty(
-                System.currentTimeMillis() / 1000,
-                100 * resourceManager.getMemoryUsage().availableSize / resourceManager.getMemoryUsage().totalSize,
-                resourceManager.getDiskUsage().availableSize / 1024L
-            ) // TODO: get complete value from resource manager
-            firebaseApiService.sendDeviceIsAlive(status, authToken.value?.idToken ?: "")
-                .enqueue(object : Callback<Map<String, String>> {
-                    override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
-                        Log.d(TAG, "Failed to send is alive update. It is possible that the authToken was not fetched correctly")
-                        Log.d(TAG, t.message?:"")
-                    }
+        fixedRateTimer("isAliveTimer", false, initialDelayInSec*1000, periodInSec*1000) {
+            if (sendIsAliveUpdates) {
+                val status = IsAliveUpdateProperty(
+                    System.currentTimeMillis() / 1000,
+                    100 * resourceManager.getMemoryUsage().availableSize / resourceManager.getMemoryUsage().totalSize,
+                    resourceManager.getDiskUsage().availableSize / 1024L
+                ) // TODO: get complete value from resource manager
+                firebaseApiService.sendDeviceIsAlive(status, authToken.value?.idToken ?: "")
+                    .enqueue(object : Callback<Map<String, String>> {
+                        override fun onFailure(call: Call<Map<String, String>>, t: Throwable) {
+                            Log.d(TAG, "Failed to send is alive update. It is possible that the authToken was not fetched correctly")
+                            Log.d(TAG, t.message?:"")
+                        }
 
-                    override fun onResponse(
-                        call: Call<Map<String, String>>,
-                        response: Response<Map<String, String>>
-                    ) {
-                        Log.d(TAG, "Device is alive update sent successfully")
-                    }
-                })
+                        override fun onResponse(
+                            call: Call<Map<String, String>>,
+                            response: Response<Map<String, String>>
+                        ) {
+                            Log.d(TAG, "Device is alive update sent successfully")
+                        }
+                    })
+
+            }
         }
     }
 
@@ -226,4 +230,11 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         }
     }
 
+    fun pauseIsAliveUpdates() {
+        sendIsAliveUpdates = false
+    }
+
+    fun resumeIsAliveUpdates() {
+        sendIsAliveUpdates = true
+    }
 }

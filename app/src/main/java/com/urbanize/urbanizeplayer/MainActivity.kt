@@ -21,6 +21,10 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
+import android.content.ComponentName
+import android.content.Context.DEVICE_POLICY_SERVICE
+import android.app.admin.DevicePolicyManager
+import android.content.Context
 
 
 class MainActivity : AppCompatActivity() {
@@ -84,6 +88,13 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onPostResume() {
+        super.onPostResume()
+        // Locks the app such that it won't allow changing apps. has a drawback where it prompts the user and requires
+        // him to allow this. This can be overcome by setting the app as a device owner. TODO: research this
+//        this.startLockTask()
+    }
+
     private fun startWebPlayer(): WebView {
         // get the webview and load the video html5 template
         val mainWebView: WebView = findViewById(R.id.webview)
@@ -94,8 +105,8 @@ class MainActivity : AppCompatActivity() {
         mainWebView.settings.domStorageEnabled = true
         mainWebView.settings.databaseEnabled = true
 
+        // inject a javascript object that allows communicating back fron the webview to the android app
         mainWebView.addJavascriptInterface(JsObject(), "injectedObject")
-//        mainWebView.loadUrl("javascript:alert(injectedObject.toString())")
 
 //        mainWebView.loadUrl("http://10.42.0.1:5000/dynamic_content")
         mainWebView.loadUrl("file:///android_asset/dynamic_content_with_tickers.html")
@@ -103,4 +114,17 @@ class MainActivity : AppCompatActivity() {
         return mainWebView
     }
 
+    override fun onPause() {
+        super.onPause()
+        viewModel.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.onResume()
+
+        // hide the status bar and action bar
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
+        actionBar?.hide()
+    }
 }

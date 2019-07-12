@@ -39,6 +39,14 @@ class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : A
         return campaigns.value?.get(nextCampaignIdx)
     }
 
+    fun onPause() {
+        mainRepository.pauseIsAliveUpdates()
+    }
+
+    fun onResume() {
+        mainRepository.resumeIsAliveUpdates()
+    }
+
     override fun onCleared() {
         super.onCleared()
         Log.i(TAG, "MainViewModel Destroyed")
