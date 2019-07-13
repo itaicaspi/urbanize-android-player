@@ -84,7 +84,11 @@ class MainActivity : AppCompatActivity() {
                 // preload one content file
                 mainWebView.evaluateJavascript("loadContent('${viewModel.nextCampaignToPreload()?.pathOnDisk}')", null)
             }, 2000)
+        })
 
+        viewModel.infoTicker.observe(this, Observer { newInfoTicker ->
+            Log.d(TAG, "update info ticker")
+            Log.d(TAG, newInfoTicker.toString())
         })
     }
 
@@ -116,11 +120,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+
+        // catch app move to background and stop is-alive updates
         viewModel.onPause()
     }
 
     override fun onResume() {
         super.onResume()
+
+        // catch app move to foreground and resume is-alive updates
         viewModel.onResume()
 
         // hide the status bar and action bar

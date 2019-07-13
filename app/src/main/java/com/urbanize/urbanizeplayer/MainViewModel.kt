@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.urbanize.urbanizeplayer.database.Campaign
+import com.urbanize.urbanizeplayer.database.InfoTickerEntry
 import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import com.urbanize.urbanizeplayer.network.AuthProperty
 
@@ -16,6 +17,7 @@ class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : A
     private val mainRepository = MainRepository(dataSource, application)
     val authToken: LiveData<AuthProperty> = mainRepository.getAuthToken()
     var campaigns: MutableLiveData<List<Campaign>> = mainRepository.getCampaigns(authToken, 60)
+    var infoTicker: MutableLiveData<List<InfoTickerEntry>> = mainRepository.getInfoTicker(authToken, 60)
     var currentRunningCampaign: Int = 0
 
     private val TAG = "MainViewModel"

@@ -6,6 +6,7 @@ import android.webkit.MimeTypeMap
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.urbanize.urbanizeplayer.database.Campaign
+import com.urbanize.urbanizeplayer.database.InfoTickerEntry
 import com.urbanize.urbanizeplayer.database.PlayerDatabaseDao
 import com.urbanize.urbanizeplayer.network.*
 import kotlinx.coroutines.GlobalScope
@@ -129,6 +130,54 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
         }
 
         return campaignsChanged
+    }
+
+
+    fun getInfoTicker(authToken: LiveData<AuthProperty>, periodInSec: Long, initialDelayInSec: Long=10): MutableLiveData<List<InfoTickerEntry>> {
+        val infoTicker = MutableLiveData<List<InfoTickerEntry>>()
+
+        // first, get the current info ticker entries from the local database
+        GlobalScope.launch {
+            infoTicker.postValue(dataSource.getAllInfoTickerEntries())
+        }
+
+        // setup a timer to fetch new campaigns every periodInSec seconds
+        fixedRateTimer("infoTickerTimer", false, initialDelayInSec*1000, periodInSec*1000) {
+            firebaseApiService.getInfoTicker(authToken.value?.idToken ?: "")
+                .enqueue(object : Callback<Map<String, InfoTickerEntryProperty>> {
+                    override fun onResponse(
+                        call: Call<Map<String, InfoTickerEntryProperty>>,
+                        response: Response<Map<String, InfoTickerEntryProperty>>
+                    ) {
+                        val rawInfoTickerEntries = response.body()
+                        Log.d(TAG, rawInfoTickerEntries.toString())
+
+                        val infoTickerEntries = rawInfoTickerEntries?.map {
+                            InfoTickerEntry(
+                                id = it.key,
+                                position = it.value.position,
+                                title = it.value.title,
+                                text = it.value.text
+                            )
+                        }
+                        infoTicker.postValue(infoTickerEntries)
+
+                        // update the database with the new entries and update the info ticker variable
+                        GlobalScope.launch {
+                            dataSource.clearInfoTickerEntries()
+                            infoTickerEntries?.forEach { dataSource.insertInfoTickerEntry(it) }
+                        }
+                    }
+
+                    // Error case is left out for brevity.
+                    override fun onFailure(call: Call<Map<String, InfoTickerEntryProperty>>, t: Throwable) {
+                        Log.d(TAG, "Failed to fetch info ticker entries. It is possible that the authToken was not fetched correctly")
+                        Log.d(TAG, t.message?:"")
+                    }
+                })
+        }
+
+        return infoTicker
     }
 
 

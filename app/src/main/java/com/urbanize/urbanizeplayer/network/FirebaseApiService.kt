@@ -28,6 +28,10 @@ interface FirebaseApiService {
 
     @PATCH("devices/$DEVICE_ID.json")
     fun updateDeviceStatus(@Body status: DeviceStatusProperty, @Query("auth") auth: String): Call<Map<String, String>>
+
+    @GET("info_tickers/$DEVICE_ID.json")
+    fun getInfoTicker(@Query("auth") auth: String): Call<Map<String, InfoTickerEntryProperty>>
+
 }
 
 object FirebaseApi {
