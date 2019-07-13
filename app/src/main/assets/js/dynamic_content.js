@@ -119,3 +119,12 @@ function swapContent() {
     }
 }
 
+function setInfoTicker(entries) {
+    var infoTicker = document.getElementById("info-ticker");
+    var numEntries = entries.length;
+    html = ""
+    for (var i = 0; i < numEntries; i++) {
+        html += "<div class='ticker__item' dir=auto><h4>" + entries[i]["title"] + "</h4><h5>" + entries[i]["text"] + "</h5></div>\n";
+    }
+    infoTicker.innerHTML = html;
+}

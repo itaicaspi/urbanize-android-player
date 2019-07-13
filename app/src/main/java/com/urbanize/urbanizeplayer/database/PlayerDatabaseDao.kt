@@ -40,6 +40,6 @@ interface PlayerDatabaseDao {
     @Query("DELETE FROM info_ticker")
     fun clearInfoTickerEntries()
 
-    @Query("SELECT * FROM info_ticker ORDER BY position DESC")
+    @Query("SELECT * FROM info_ticker ORDER BY position ASC")
     fun getAllInfoTickerEntries(): List<InfoTickerEntry>
 }

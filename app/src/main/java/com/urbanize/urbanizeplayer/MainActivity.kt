@@ -89,6 +89,12 @@ class MainActivity : AppCompatActivity() {
         viewModel.infoTicker.observe(this, Observer { newInfoTicker ->
             Log.d(TAG, "update info ticker")
             Log.d(TAG, newInfoTicker.toString())
+
+            Handler().postDelayed({
+                val entriesList = newInfoTicker.map { "{'title':'" + it.title + "', text: '" + it.text + "'}" }
+                    .joinToString(", ", "[", "]")
+                mainWebView.evaluateJavascript("setInfoTicker($entriesList)", null)
+            }, 2000)
         })
     }
 

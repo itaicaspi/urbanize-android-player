@@ -2,60 +2,20 @@
 <html lang="en">
 <head>
     <title>Urbanize</title>
-    <style>
-		.content {
-		    position: absolute;
-			background: black;
-			left: 0;
-			top: 0;
-			z-index: 100;
-		}
-		body {
-			background: white;
-			overflow: hidden;
-		}
-		.vertical-center {
-			display: flex;
-  			align-items: center;
-		}
-		.feed {
-			background: rgba(235, 235, 235, 1);
-			z-index: 200;
-		}
-		.feed-logo {
-			background: rgba(235, 235, 235, 1);
-			z-index: 200;
-		}
-		.feed-date {
-			font-size: 0.9rem;
-		}
-		.feed-item {
-			position: absolute;
-			top: 15%;
-			width: 100%;
-			display: block;
-			animation-timing-function: ease-in-out;
-			-webkit-animation-timing-function: ease-in-out;
-			animation-iteration-count: infinite;
-			-webkit-animation-iteration-count: infinite;
 
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="css/style.css">
 
-			text-align: right;
-			color: black;
-			font-weight: bold;
-			font-size: 2rem;
-			padding: 0 50px 0 0;
-		}
-	</style>
-
-    <!--Feed Style - DO NOT REMOVE! WILL BE FILLED DYNAMICALLY-->
+    <!-- Feed Style - DO NOT REMOVE! WILL BE FILLED DYNAMICALLY -->
     <style id="feed-style"></style>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
+
     <!-- JQuery -->
     <script src="js/jquery-3.3.1.min.js"></script>
-    <!--RSS Feed Reader -->
+
+    <!-- RSS Feed Reader -->
     <script src="js/gfapi.js"></script>
 
     <script type="text/javascript">
@@ -83,7 +43,7 @@ function showRSSFeed(result) {
     var numEntries = Math.min(entries.length, maxEntries);
     var changeSize = 100 / (numEntries * 2);
     for (var i = 0; i < numEntries; i++) {
-      html += "<div class='feed-item item-" + (i+1) + "'>" + entries[i].title + "<div class='feed-date'>" + entries[i].publishedDate + "</div>" + "</div>";
+      html += "<div class='feed-item item-" + (i+1) + "' dir=auto>" + entries[i].title + "<div class='feed-date'>" + entries[i].publishedDate + "</div>" + "</div>";
       var disappear = 2 * changeSize * (i + 1);
       var start = changeSize / 2 + 2*changeSize*i;
       var end = start + changeSize;
@@ -119,6 +79,16 @@ window.onload = function() {
 <div class="row" style="height: 83.5vh;">
     <div class="col-3 text-center pt-2 h-100">
         <img src="img/logo.png" class="p-4"/>
+
+        <div class="p-4">
+            <div class="ticker-wrap">
+                <div class="ticker" id="info-ticker">
+                </div>
+            </div>
+
+        </div>
+
+
     </div>
     <div class="col-9 px-0 h-100">
         <img src="urbanize_ad.png" alt="Ad" class="content" height="100%" id="image_front"/>
@@ -142,6 +112,8 @@ window.onload = function() {
         <img src="img/walla.png" width="100%" class="m-auto pr-4"/>
     </div>
 </div>
+
+<!-- Dynamic Content Loading-->
 <script src="js/dynamic_content.js"></script>
 
 </body>
