@@ -160,7 +160,7 @@ class MainRepository(private val dataSource: PlayerDatabaseDao, private val appl
                                 text = it.value.text
                             )
                         }
-                        infoTicker.postValue(infoTickerEntries)
+                        infoTicker.postValue(infoTickerEntries?.sortedBy { v -> v.position })
 
                         // update the database with the new entries and update the info ticker variable
                         GlobalScope.launch {
