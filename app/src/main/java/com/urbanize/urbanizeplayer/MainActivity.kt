@@ -1,29 +1,23 @@
 package com.urbanize.urbanizeplayer
 
-import android.net.Uri
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.webkit.JavascriptInterface
-import android.webkit.MimeTypeMap
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.urbanize.urbanizeplayer.database.PlayerDatabase
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.net.URL
-import android.content.ComponentName
-import android.content.Context.DEVICE_POLICY_SERVICE
-import android.app.admin.DevicePolicyManager
+import android.content.Intent
+import android.content.Context.ACTIVITY_SERVICE
+import android.app.ActivityManager
 import android.content.Context
 
 
@@ -55,6 +49,33 @@ class MainActivity : AppCompatActivity() {
         // hide the status bar and action bar
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_FULLSCREEN
         actionBar?.hide()
+
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.SYSTEM_ALERT_WINDOW)
+            != PackageManager.PERMISSION_GRANTED) {
+
+            // Permission is not granted
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.SYSTEM_ALERT_WINDOW)) {
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                    arrayOf(Manifest.permission.SYSTEM_ALERT_WINDOW),
+                    123)
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        } else {
+            // Permission has already been granted
+        }
 
         // create the view model
         val dataSource = PlayerDatabase.getInstance(application).playerDatabaseDao
@@ -124,8 +145,36 @@ class MainActivity : AppCompatActivity() {
         return mainWebView
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) {
+            // Close every kind of system dialog
+            val closeDialog = Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS)
+            sendBroadcast(closeDialog)
+            Log.d(TAG, "system dialog closed")
+        }
+    }
+
+    override fun onBackPressed() {
+        // nothing to do here
+        // … really
+    }
+
     override fun onPause() {
         super.onPause()
+
+        Log.d(TAG, "Activity Paused")
+//        val activityManager = applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+//
+//        activityManager.moveTaskToFront(taskId, 0)
+////\
+        // reopen the app if it is moved to background
+        if (viewModel.pauseCount >= 1) {
+            Log.d(TAG, "enter paused")
+            val i = Intent(this, MainActivity::class.java)
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            this.startActivity(i)
+        }
 
         // catch app move to background and stop is-alive updates
         viewModel.onPause()

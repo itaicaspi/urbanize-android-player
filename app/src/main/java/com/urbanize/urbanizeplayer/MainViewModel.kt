@@ -19,6 +19,7 @@ class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : A
     var campaigns: MutableLiveData<List<Campaign>> = mainRepository.getCampaigns(authToken, 60)
     var infoTicker: MutableLiveData<List<InfoTickerEntry>> = mainRepository.getInfoTicker(authToken, 60)
     var currentRunningCampaign: Int = 0
+    var pauseCount: Int = 0
 
     private val TAG = "MainViewModel"
 
@@ -43,6 +44,7 @@ class MainViewModel(dataSource: PlayerDatabaseDao, application: Application) : A
 
     fun onPause() {
         mainRepository.pauseIsAliveUpdates()
+        pauseCount += 1
     }
 
     fun onResume() {
