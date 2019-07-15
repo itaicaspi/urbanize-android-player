@@ -8,12 +8,14 @@ function checkContentType(url){
 
 
 var videoToLoad = "front";
+var imageToLoad = "front";
 var nextContentType = "video";
 function loadContent(content, delay=0) {
     var contentType = checkContentType(content);
     nextContentType = contentType;
 
     var frontImage = document.getElementById('image_front');
+    var backImage = document.getElementById('image_back');
     var frontVideo = document.getElementById('video_front');
     var backVideo = document.getElementById('video_back');
     var backSource = document.getElementById('source_back');
@@ -37,18 +39,26 @@ function loadContent(content, delay=0) {
             videoToLoad = "front";
         }
     } else {
-        frontImage.setAttribute('src', content);
+        if (imageToLoad == "front") {
+            frontImage.setAttribute('src', content);
+            imageToLoad = "back";
+        } else {
+            backImage.setAttribute('src', content);
+            imageToLoad = "front";
+        }
     }
 }
 
 
 var videoToShow = "front";
+var imageToShow = "front";
 function swapContent() {
     var playDelay = 1;
     var hideDelay = 300;
     var imagePlayTime = 6*1000;
 
     var frontImage = document.getElementById('image_front');
+    var backImage = document.getElementById('image_back');
     var frontVideo = document.getElementById('video_front');
     var backVideo = document.getElementById('video_back');
     var backSource = document.getElementById('source_back');
@@ -59,6 +69,7 @@ function swapContent() {
         window.setTimeout(function() {
             frontVideo.style.display = "none";
             frontImage.style.display = "none";
+            backImage.style.display = "none";
         }, hideDelay)
     }
 
@@ -67,14 +78,25 @@ function swapContent() {
         window.setTimeout(function() {
             backVideo.style.display = "none";
             frontImage.style.display = "none";
+            backImage.style.display = "none";
         }, hideDelay)
     }
 
-    var showImage = function() {
+    var showFrontImage = function() {
         frontImage.style.display = "block";
         window.setTimeout(function() {
             backVideo.style.display = "none";
             frontVideo.style.display = "none";
+            backImage.style.display = "none";
+        }, hideDelay);
+    }
+
+    var showBackImage = function() {
+        backImage.style.display = "block";
+        window.setTimeout(function() {
+            backVideo.style.display = "none";
+            frontVideo.style.display = "none";
+            frontImage.style.display = "none";
         }, hideDelay);
     }
 
@@ -111,7 +133,13 @@ function swapContent() {
             videoToShow = "front";
         }
     } else {
-        showImage();
+        if (imageToShow == "front") {
+            showFrontImage();
+            imageToShow = "back";
+        } else {
+            showBackImage();
+            imageToShow = "front";
+        }
         window.setTimeout(function() {
             swapContent();
             injectedObject.videoEnded();
