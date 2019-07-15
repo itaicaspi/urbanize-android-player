@@ -45,7 +45,7 @@ function loadContent(content, delay=0) {
 var videoToShow = "front";
 function swapContent() {
     var playDelay = 1;
-    var hideDelay = 200;
+    var hideDelay = 300;
     var imagePlayTime = 6*1000;
 
     var frontImage = document.getElementById('image_front');
@@ -119,12 +119,31 @@ function swapContent() {
     }
 }
 
+var sanitizeHTML = function (str) {
+	var temp = document.createElement('div');
+	temp.textContent = str;
+	return temp.innerHTML;
+};
+
 function setInfoTicker(entries) {
     var infoTicker = document.getElementById("info-ticker");
     var numEntries = entries.length;
-    html = ""
-    for (var i = 0; i < numEntries; i++) {
-        html += "<div class='ticker__item' dir=auto><h4>" + entries[i]["title"] + "</h4><h5>" + entries[i]["text"] + "</h5></div>\n";
+    while (infoTicker.firstChild) {
+        infoTicker.removeChild(infoTicker.firstChild);
     }
-    infoTicker.innerHTML = html;
+    for (var i = 0; i < numEntries; i++) {
+        var tickerItem = document.createElement("div");
+        tickerItem.classList.add("ticker__item");
+        tickerItem.setAttribute("dir", "auto")
+        var tickerItemTitle = document.createElement("h4");
+        tickerItemTitle.classList.add("font-weight-bold");
+        tickerItemTitle.textContent = entries[i]["title"];
+        var tickerItemText = document.createElement("h5");
+        tickerItemText.textContent = entries[i]["text"];
+        tickerItem.appendChild(tickerItemTitle);
+        tickerItem.appendChild(tickerItemText);
+        infoTicker.appendChild(tickerItem);
+//        html += "<div class='ticker__item' dir=auto><h4><b>" + sanitizeHTML(entries[i]["title"]) + "</b></h4><h5>" + sanitizeHTML(entries[i]["text"]) + "</h5></div>\n";
+    }
+//    infoTicker.innerHTML = html;
 }

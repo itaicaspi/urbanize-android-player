@@ -19,6 +19,7 @@ import android.content.Intent
 import android.content.Context.ACTIVITY_SERVICE
 import android.app.ActivityManager
 import android.content.Context
+import android.webkit.ConsoleMessage
 
 
 class MainActivity : AppCompatActivity() {
@@ -112,8 +113,11 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, newInfoTicker.toString())
 
             Handler().postDelayed({
-                val entriesList = newInfoTicker.map { "{'title':'" + it.title + "', text: '" + it.text + "'}" }
+                val entriesList = newInfoTicker.map {
+                    "{'title':'" + it.title.replace("'", "\\'") +
+                    "', text: '" + it.text.replace("'", "\\'") + "'}" }
                     .joinToString(", ", "[", "]")
+                Log.d(TAG, "send info ticker to javascript")
                 mainWebView.evaluateJavascript("setInfoTicker($entriesList)", null)
             }, 2000)
         })
@@ -129,7 +133,12 @@ class MainActivity : AppCompatActivity() {
     private fun startWebPlayer(): WebView {
         // get the webview and load the video html5 template
         val mainWebView: WebView = findViewById(R.id.webview)
-        mainWebView.webChromeClient = WebChromeClient()
+        mainWebView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                Log.d("WebView", consoleMessage?.message() ?: "")
+                return super.onConsoleMessage(consoleMessage)
+            }
+        }
         mainWebView.settings.javaScriptEnabled = true
         mainWebView.settings.mediaPlaybackRequiresUserGesture = false
         mainWebView.settings.setAppCacheEnabled(true)
